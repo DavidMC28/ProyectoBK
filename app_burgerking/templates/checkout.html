@@ -1,0 +1,150 @@
+{% extends 'base_cliente.html' %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center; color: var(--bk-red); margin-bottom: 2rem;">FINALIZAR COMPRA</h1>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+        <h3 style="color: var(--bk-blue); margin-bottom: 1rem;">Información de Envío</h3>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Dirección:</label>
+                <textarea name="direccion" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; resize: vertical; min-height: 80px;">{{ cliente.direccion }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Teléfono:</label>
+                <input type="tel" name="telefono" value="{{ cliente.telefono }}" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px;">
+            </div>
+            
+            <!-- MÉTODO DE PAGO -->
+            <div class="form-group" style="margin: 2rem 0;">
+                <h4 style="color: var(--bk-blue); margin-bottom: 1rem;">Método de Pago</h4>
+                
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1rem; border: 2px solid #ddd; border-radius: 8px; flex: 1; transition: all 0.3s;">
+                        <input type="radio" name="metodo_pago" value="efectivo" checked style="transform: scale(1.2);">
+                        <span style="font-weight: bold;">💰 EFECTIVO</span>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1rem; border: 2px solid #ddd; border-radius: 8px; flex: 1; transition: all 0.3s;">
+                        <input type="radio" name="metodo_pago" value="tarjeta" style="transform: scale(1.2);">
+                        <span style="font-weight: bold;">💳 TARJETA</span>
+                    </label>
+                </div>
+                
+                <!-- Mensaje informativo -->
+                <div id="mensaje-pago" style="padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--bk-blue);">
+                    <strong>💵 Pago en efectivo:</strong> Realiza el pago al momento de la entrega.
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.2rem; font-size: 1.1rem; font-weight: bold;">
+                ✅ CONFIRMAR COMPRA
+            </button>
+        </form>
+    </div>
+    
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+        <h3 style="color: var(--bk-blue); margin-bottom: 1rem;">Resumen del Pedido</h3>
+        
+        {% if items %}
+            {% for item in items %}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                <div style="flex: 1;">
+                    <strong>{{ item.producto.nombre }}</strong>
+                    <div style="font-size: 0.9rem; color: #666;">Cantidad: {{ item.cantidad }}</div>
+                </div>
+                <span style="font-weight: bold; color: var(--bk-brown);">${{ item.subtotal }} MXN</span>
+            </div>
+            {% endfor %}
+            
+            <div style="border-top: 2px solid var(--bk-red); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+                    <span>Total:</span>
+                    <span style="color: var(--bk-red);">${{ total }} MXN</span>
+                </div>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem; color: #666;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🛒</div>
+                <p>No hay productos en el carrito</p>
+                <a href="{% url 'menu' %}" class="btn btn-primary" style="margin-top: 1rem;">Agregar Productos</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: var(--bk-dark);
+    }
+    
+    input[type="radio"]:checked + span {
+        color: var(--bk-red);
+    }
+    
+    label:hover {
+        border-color: var(--bk-blue) !important;
+    }
+    
+    input[type="radio"]:checked ~ span {
+        color: var(--bk-red);
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const radioEfectivo = document.querySelector('input[value="efectivo"]');
+        const radioTarjeta = document.querySelector('input[value="tarjeta"]');
+        const mensajePago = document.getElementById('mensaje-pago');
+        
+        function actualizarMensaje() {
+            if (radioTarjeta.checked) {
+                mensajePago.innerHTML = `
+                    <strong>💳 Pago con tarjeta:</strong> Serás redirigido a nuestro sistema seguro de pago.
+                `;
+                mensajePago.style.borderLeftColor = 'var(--bk-red)';
+            } else {
+                mensajePago.innerHTML = `
+                    <strong>💵 Pago en efectivo:</strong> Realiza el pago al momento de la entrega.
+                `;
+                mensajePago.style.borderLeftColor = 'var(--bk-blue)';
+            }
+        }
+        
+        radioEfectivo.addEventListener('change', actualizarMensaje);
+        radioTarjeta.addEventListener('change', actualizarMensaje);
+        
+        // Estilo visual cuando se selecciona una opción
+        const labels = document.querySelectorAll('label[style*="cursor: pointer"]');
+        labels.forEach(label => {
+            const radio = label.querySelector('input[type="radio"]');
+            
+            radio.addEventListener('change', function() {
+                labels.forEach(l => {
+                    l.style.borderColor = '#ddd';
+                    l.style.background = 'white';
+                });
+                
+                if (this.checked) {
+                    label.style.borderColor = 'var(--bk-red)';
+                    label.style.background = '#fff5f5';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
